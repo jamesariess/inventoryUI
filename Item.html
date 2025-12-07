@@ -1,0 +1,649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WareSync - Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            margin: 0;
+            overflow-x: hidden;
+            background-color: #f3f4f6;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #14b8a6 100%);
+        }
+        .dark .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #0d9488 100%);
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+        }
+        .dark .card {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .alert-card {
+            background: rgba(254, 243, 199, 0.9);
+            border-left: 4px solid #f59e0b;
+        }
+        .dark .alert-card {
+            background: rgba(120, 53, 15, 0.9);
+            border-left: 4px solid #d97706;
+        }
+        .logo-glow {
+            filter: drop-shadow(0 0 10px rgba(20, 184, 166, 0.5));
+            transition: filter 0.3s;
+        }
+        .logo-glow:hover {
+            filter: drop-shadow(0 0 15px rgba(20, 184, 166, 0.7));
+        }
+        .dark-mode-toggle {
+            background: #e2e8f0;
+            width: 40px;
+            height: 20px;
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .dark .dark-mode-toggle {
+            background: #475569;
+        }
+        .dark .dark-mode-toggle::before {
+            transform: translateX(20px);
+            background: #14b8a6;
+        }
+        .dark-mode-toggle::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #1e3a8a;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s, background 0.3s;
+        }
+        .text-gray-800 {
+            color: #111827;
+        }
+        .dark .text-gray-800 {
+            color: #f1f5f9;
+        }
+        .text-gray-600 {
+            color: #374151;
+        }
+        .dark .text-gray-600 {
+            color: #94a3b8;
+        }
+        .text-amber-700 {
+            color: #b45309;
+        }
+        .dark .text-amber-700 {
+            color: #f59e0b;
+        }
+        /* Table Styles */
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .inventory-table th,
+        .inventory-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .dark .inventory-table th,
+        .dark .inventory-table td {
+            border-bottom: 1px solid #4b5563;
+        }
+        .inventory-table th {
+            background: #f9fafb;
+            color: #374151;
+            font-weight: 600;
+        }
+        .dark .inventory-table th {
+            background: #1e293b;
+            color: #d1d5db;
+        }
+        .inventory-table td {
+            color: #374151;
+        }
+        .dark .inventory-table td {
+            color: #94a3b8;
+        }
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background: #1e3a8a;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+        .sidebar.minimized {
+            width: 80px;
+        }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-logo {
+            flex: 1;
+        }
+        .sidebar.minimized .sidebar-logo-text {
+            display: none;
+        }
+        .menu-icon {
+            cursor: pointer;
+            color: #111827;
+        }
+        .dark .menu-icon {
+            color: #ffffff;
+        }
+        .sidebar-nav {
+            margin-top: 20px;
+        }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: #e2e8f0;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .sidebar-nav a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-nav a svg {
+            margin-right: 12px;
+        }
+        .sidebar.minimized .sidebar-nav a span {
+            display: none;
+        }
+        .sidebar.minimized .sidebar-nav a svg {
+            margin-right: 0;
+        }
+        /* Navbar Styles */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            height: 64px;
+            background: rgba(255, 255, 255, 1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 24px;
+            transition: left 0.3s ease;
+            z-index: 50;
+        }
+        .sidebar.minimized ~ .navbar {
+            left: 80px;
+        }
+        .dark .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #14b8a6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .logout-btn {
+            background: #ef4444;
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .main-content {
+            margin-left: 260px;
+            margin-top: 64px;
+            padding: 24px;
+            min-height: calc(100vh - 64px);
+            background: #f1f5f9;
+            transition: margin-left 0.3s ease;
+        }
+        .sidebar.minimized ~ .main-content {
+            margin-left: 80px;
+        }
+        .dark .main-content {
+            background: #0f172a;
+        }
+        @media (max-width: 640px) {
+            .sidebar {
+                width: 200px;
+            }
+            .sidebar.minimized {
+                width: 60px;
+            }
+            .navbar {
+                left: 200px;
+            }
+            .sidebar.minimized ~ .navbar {
+                left: 60px;
+            }
+            .main-content {
+                margin-left: 200px;
+                padding: 16px;
+            }
+            .sidebar.minimized ~ .main-content {
+                margin-left: 60px;
+            }
+            .card {
+                padding: 16px;
+            }
+            .text-3xl {
+                font-size: 1.75rem;
+            }
+        }
+        /* Status Card Styles */
+        .status-card {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .status-card div {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            border-radius: 0.5rem;
+        }
+        .status-card .total {
+            background: #e0f2fe;
+            color: #1e40af;
+        }
+        .status-card .low-stock {
+            background: #fefcbf;
+            color: #a16207;
+        }
+        .status-card .out-of-stock {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .status-card .transactions {
+            background: #d1fae5;
+            color: #047857;
+        }
+        .dark .status-card .total {
+            background: #1e293b;
+            color: #93c5fd;
+        }
+        .dark .status-card .low-stock {
+            background: #452700;
+            color: #fcd34d;
+        }
+        .dark .status-card .out-of-stock {
+            background: #451a1a;
+            color: #f87171;
+        }
+        .dark .status-card .transactions {
+            background: #164e3a;
+            color: #6ee7b7;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+        .dark .modal-content {
+            background: rgba(15, 23, 42, 0.9);
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #374151;
+        }
+        .dark .close-btn {
+            color: #d1d5db;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+        }
+        .dark .modal-input {
+            border-color: #4b5563;
+            background: #1e293b;
+            color: #d1d5db;
+        }
+    </style>
+</head>
+<body>
+    <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <svg class="logo-glow h-10" xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60">
+                    <g transform="translate(10 10)">
+                        <path d="M0 30 H40 V10 L20 0 L0 10 V30 Z" fill="#1e3a8a"/>
+                        <rect x="15" y="20" width="10" height="10" fill="#ffffff"/>
+                        <path d="M45 15 A15 15 0 0 1 30 30 H35" fill="none" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M15 15 A15 15 0 0 0 30 0 H25" fill="none" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                    <text x="60" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" class="sidebar-logo-text">
+                        <tspan fill="#1e3a8a">Ware</tspan>
+                        <tspan fill="#14b8a6">Sync</tspan>
+                    </text>
+                </svg>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+            <a href="dashboard.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="Item.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Create Items</span>
+            </a>
+            <a href="viewitems.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <span>Manage Items</span>
+            </a>
+            <a href="inventory.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                </svg>
+                <span>Inventory</span>
+            </a>
+            <a href="stockout.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h1m0 0l3-3m-3 3l3 3m-3-3v-6m6 6h1a2 2 0 002-2V7a2 2 0 00-2-2h-1m0 0l-3 3m3-3l-3-3"></path>
+                </svg>
+                <span>Record Stock Out</span>
+            </a>
+            <a href="stock.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Record Stock Adjustment</span>
+            </a>
+            <a href="supplier-management.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <span>Supplier Management</span>
+            </a>
+            <a href="location-management.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span>Location Management</span>
+            </a>
+            <a href="reporting.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h2m-2 6h2a4 4 0 014 4v2m-8-6a4 4 0 01-4-4V7m4 10h2m-2 0H7m10 0v-2a4 4 0 00-4-4H9m4 6v2m0 0v2a4 4 0 01-4 4H9m4-6h2"></path>
+                </svg>
+                <span>Reports</span>
+            </a>
+            <a href="usermanagement.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14v6m0 0h6m-6 0H6"></path>
+                </svg>
+                <span>User Management</span>
+            </a>
+            <a href="setting.html" class="active">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span>Settings</span>
+            </a>
+        </div>
+    </div>
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="flex items-center mr-auto">
+            <svg id="menuToggle" class="menu-icon h-6 w-6 mr-4 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+        </div>
+        <div class="user-profile">
+            <div class="user-avatar">JD</div>
+            <span class="text-gray-800">John Doe</span>
+            <a href="#" id="logoutBtn" class="logout-btn">Logout</a>
+            <div id="darkModeToggle" class="dark-mode-toggle" aria-label="Toggle dark mode"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-700 mb-6">Add New Item/Stock</h1>
+        <div class="card p-6">
+            <form id="addItemForm" class="space-y-4">
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-300">Item Name</label>
+                    <input type="text" id="itemName" class="modal-input" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-300">SKU (Stock Keeping Unit)</label>
+                    <input type="text" id="sku" class="modal-input" required>
+                </div>
+             <div>
+                    <label class="block text-gray-700 dark:text-gray-300">Category</label>
+                    <select id="category" class="modal-input" required>
+                        <option value="">Select a category</option>
+                        <option value="Electronics">Electronics</option>
+                        <option value="Clothing">Clothing</option>
+                        <option value="Food">Food</option>
+                        <option value="Furniture">Furniture</option>
+                    </select>
+                    <span class="error-message" id="categoryError">Please select a category.</span>
+                </div>
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-300">Unit of Measurement</label>
+                    <select id="unitOfMeasurement" class="modal-input" required>
+                        <option value="pieces">Pieces</option>
+                        <option value="liters">Liters</option>
+                        <option value="kilograms">Kilograms</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-300">Supplier Information</label>
+                    <input type="text" id="supplierInfo" class="modal-input" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-300">Warehouse Location</label>
+                    <select id="warehouseLocation" class="modal-input" required>
+                        <option value="A1">A1</option>
+                        <option value="B2">B2</option>
+                        <option value="C3">C3</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-300">Cost per Unit</label>
+                    <input type="number" id="costPerUnit" step="0.01" class="modal-input" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-300">Selling Price per Unit</label>
+                    <input type="number" id="sellingPrice" step="0.01" class="modal-input" required>
+                </div>
+                <div>
+                    <label class="block text-gray-700 dark:text-gray-300">Image Upload</label>
+                    <input type="file" id="imageUpload" class="modal-input" accept="image/*">
+                </div>
+                <div class="flex space-x-4">
+                    <button type="submit" id="saveBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600">Save</button>
+                    <button type="button" id="cancelBtn" class="bg-red-500 text-white px-4 py-2 rounded hover:bg-red-600">Cancel</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+const sidebar = document.getElementById('sidebar');
+const menuToggle = document.getElementById('menuToggle');
+const logoutBtn = document.getElementById('logoutBtn');
+const darkModeToggle = document.getElementById('darkModeToggle');
+const addItemForm = document.getElementById('addItemForm');
+const saveBtn = document.getElementById('saveBtn');
+const cancelBtn = document.getElementById('cancelBtn');
+
+// Default settings (consistent with other pages)
+const defaultSettings = {
+    systemName: 'WareSync',
+    defaultCurrency: 'USD',
+    theme: 'light',
+    emailNotifications: false
+};
+
+// Load settings from localStorage or use defaults
+let settings = JSON.parse(localStorage.getItem('settings')) || defaultSettings;
+
+// Load inventory data from localStorage or initialize empty
+let inventoryData = JSON.parse(localStorage.getItem('inventoryData')) || [];
+
+// Check if user is logged in
+const userSession = JSON.parse(localStorage.getItem('userSession'));
+if (!userSession) {
+    window.location.href = 'index.html';
+}
+
+// Initialize theme based on settings
+function initializeTheme() {
+    if (settings.theme === 'dark') {
+        document.body.classList.add('dark');
+        darkModeToggle.classList.add('dark');
+    } else {
+        document.body.classList.remove('dark');
+        darkModeToggle.classList.remove('dark');
+    }
+}
+
+// Dark Mode Toggle
+darkModeToggle.addEventListener('click', () => {
+    const isDark = document.body.classList.toggle('dark');
+    darkModeToggle.classList.toggle('dark');
+    settings.theme = isDark ? 'dark' : 'light';
+    localStorage.setItem('settings', JSON.stringify(settings));
+});
+
+// Sidebar Toggle
+menuToggle.addEventListener('click', () => {
+    sidebar.classList.toggle('minimized');
+});
+
+// Logout Functionality
+logoutBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    localStorage.removeItem('userSession');
+    window.location.href = 'index.html';
+});
+
+// Handle form submission for adding new item
+addItemForm.addEventListener('submit', (e) => {
+    e.preventDefault();
+    const itemName = document.getElementById('itemName').value;
+    const sku = document.getElementById('sku').value;
+    const category = document.getElementById('category').value;
+    const unitOfMeasurement = document.getElementById('unitOfMeasurement').value;
+    const supplierInfo = document.getElementById('supplierInfo').value;
+    const warehouseLocation = document.getElementById('warehouseLocation').value;
+    const costPerUnit = parseFloat(document.getElementById('costPerUnit').value);
+    const sellingPrice = parseFloat(document.getElementById('sellingPrice').value);
+    const imageUpload = document.getElementById('imageUpload').files[0];
+
+    // Validate inputs
+    if (!itemName || !sku || !category || !unitOfMeasurement || !supplierInfo || !warehouseLocation || !costPerUnit || !sellingPrice) {
+        alert('All fields except image are required!');
+        return;
+    }
+
+    // Check for duplicate SKU
+    if (inventoryData.some(item => item.sku === sku)) {
+        alert('SKU already exists!');
+        return;
+    }
+
+    // Create new item
+    const newItem = {
+        id: inventoryData.length + 1,
+        itemName,
+        sku,
+        category,
+        quantity: 0, // Initial quantity
+        unitOfMeasurement,
+        supplierInfo,
+        location: warehouseLocation,
+        costPerUnit,
+        sellingPrice,
+        image: imageUpload ? URL.createObjectURL(imageUpload) : null,
+        status: 'Out of Stock' // Initial status
+    };
+
+    inventoryData.push(newItem);
+    localStorage.setItem('inventoryData', JSON.stringify(inventoryData));
+    addItemForm.reset();
+    alert('Item added successfully!');
+});
+
+// Cancel form
+cancelBtn.addEventListener('click', () => {
+    addItemForm.reset();
+});
+
+// Initial setup
+initializeTheme();
+    </script>
+</body>
+</html>

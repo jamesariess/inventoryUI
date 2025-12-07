@@ -1,0 +1,680 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WareSync - Inventory</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            transition: background-color 0.3s, color 0.3s;
+            margin: 0;
+            overflow-x: hidden;
+        }
+        .gradient-bg {
+            background: linear-gradient(135deg, #1e3a8a 0%, #14b8a6 100%);
+        }
+        .dark .gradient-bg {
+            background: linear-gradient(135deg, #0f172a 0%, #0d9488 100%);
+        }
+        .card {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 1.5rem;
+        }
+        .dark .card {
+            background: rgba(15, 23, 42, 0.9);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        .alert-card {
+            background: rgba(254, 243, 199, 0.9);
+            border-left: 4px solid #f59e0b;
+        }
+        .dark .alert-card {
+            background: rgba(120, 53, 15, 0.9);
+            border-left: 4px solid #d97706;
+        }
+        .logo-glow {
+            filter: drop-shadow(0 0 10px rgba(20, 184, 166, 0.5));
+            transition: filter 0.3s;
+        }
+        .logo-glow:hover {
+            filter: drop-shadow(0 0 15px rgba(20, 184, 166, 0.7));
+        }
+        .dark-mode-toggle {
+            background: #e2e8f0;
+            width: 40px;
+            height: 20px;
+            border-radius: 20px;
+            position: relative;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+        .dark .dark-mode-toggle {
+            background: #475569;
+        }
+        .dark .dark-mode-toggle::before {
+            transform: translateX(20px);
+            background: #14b8a6;
+        }
+        .dark-mode-toggle::before {
+            content: '';
+            position: absolute;
+            width: 16px;
+            height: 16px;
+            background: #1e3a8a;
+            border-radius: 50%;
+            top: 2px;
+            left: 2px;
+            transition: transform 0.3s, background 0.3s;
+        }
+        .text-gray-800 {
+            color: #111827;
+        }
+        .dark .text-gray-800 {
+            color: #f1f5f9;
+        }
+        .text-gray-600 {
+            color: #374151;
+        }
+        .dark .text-gray-600 {
+            color: #94a3b8;
+        }
+        .text-amber-700 {
+            color: #b45309;
+        }
+        .dark .text-amber-700 {
+            color: #f59e0b;
+        }
+        /* Table Styles */
+        .inventory-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 1rem;
+        }
+        .inventory-table th,
+        .inventory-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid #e5e7eb;
+        }
+        .dark .inventory-table th,
+        .dark .inventory-table td {
+            border-bottom: 1px solid #4b5563;
+        }
+        .inventory-table th {
+            background: #f9fafb;
+            color: #374151;
+            font-weight: 600;
+        }
+        .dark .inventory-table th {
+            background: #1e293b;
+            color: #d1d5db;
+        }
+        .inventory-table td {
+            color: #374151;
+        }
+        .dark .inventory-table td {
+            color: #94a3b8;
+        }
+        /* Sidebar Styles */
+        .sidebar {
+            width: 260px;
+            background: #1e3a8a;
+            height: 100vh;
+            position: fixed;
+            top: 0;
+            left: 0;
+            transition: width 0.3s ease;
+            overflow: hidden;
+        }
+        .sidebar.minimized {
+            width: 80px;
+        }
+        .sidebar-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 16px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-logo {
+            flex: 1;
+        }
+        .sidebar.minimized .sidebar-logo-text {
+            display: none;
+        }
+        .menu-icon {
+            cursor: pointer;
+            color: #111827;
+        }
+        .dark .menu-icon {
+            color: #ffffff;
+        }
+        .sidebar-nav {
+            margin-top: 20px;
+        }
+        .sidebar-nav a {
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            color: #e2e8f0;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .sidebar-nav a:hover {
+            background: rgba(255, 255, 255, 0.1);
+        }
+        .sidebar-nav a svg {
+            margin-right: 12px;
+        }
+        .sidebar.minimized .sidebar-nav a span {
+            display: none;
+        }
+        .sidebar.minimized .sidebar-nav a svg {
+            margin-right: 0;
+        }
+        /* Navbar Styles */
+        .navbar {
+            position: fixed;
+            top: 0;
+            left: 260px;
+            right: 0;
+            height: 64px;
+            background: rgba(255, 255, 255, 1);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid rgba(0, 0, 0, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: flex-end;
+            padding: 0 24px;
+            transition: left 0.3s ease;
+            z-index: 50;
+        }
+        .sidebar.minimized ~ .navbar {
+            left: 80px;
+        }
+        .dark .navbar {
+            background: rgba(15, 23, 42, 0.95);
+            border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+        }
+        .user-profile {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .user-avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            background: #14b8a6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #ffffff;
+            font-weight: 600;
+        }
+        .logout-btn {
+            background: #ef4444;
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            transition: background 0.2s;
+        }
+        .main-content {
+            margin-left: 260px;
+            margin-top: 64px;
+            padding: 24px;
+            min-height: calc(100vh - 64px);
+            background: #f1f5f9;
+            transition: margin-left 0.3s ease;
+        }
+        .sidebar.minimized ~ .main-content {
+            margin-left: 80px;
+        }
+        .dark .main-content {
+            background: #0f172a;
+        }
+        @media (max-width: 640px) {
+            .sidebar {
+                width: 200px;
+            }
+            .sidebar.minimized {
+                width: 60px;
+            }
+            .navbar {
+                left: 200px;
+            }
+            .sidebar.minimized ~ .navbar {
+                left: 60px;
+            }
+            .main-content {
+                margin-left: 200px;
+                padding: 16px;
+            }
+            .sidebar.minimized ~ .main-content {
+                margin-left: 60px;
+            }
+            .card {
+                padding: 16px;
+            }
+            .text-3xl {
+                font-size: 1.75rem;
+            }
+        }
+        /* Status Card Styles */
+        .status-card {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+        .status-card div {
+            flex: 1;
+            padding: 1rem;
+            text-align: center;
+            border-radius: 0.5rem;
+        }
+        .status-card .total {
+            background: #e0f2fe;
+            color: #1e40af;
+        }
+        .status-card .low-stock {
+            background: #fefcbf;
+            color: #a16207;
+        }
+        .status-card .out-of-stock {
+            background: #fee2e2;
+            color: #dc2626;
+        }
+        .status-card .transactions {
+            background: #d1fae5;
+            color: #047857;
+        }
+        .dark .status-card .total {
+            background: #1e293b;
+            color: #93c5fd;
+        }
+        .dark .status-card .low-stock {
+            background: #452700;
+            color: #fcd34d;
+        }
+        .dark .status-card .out-of-stock {
+            background: #451a1a;
+            color: #f87171;
+        }
+        .dark .status-card .transactions {
+            background: #164e3a;
+            color: #6ee7b7;
+        }
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 100;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.5);
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            background: rgba(255, 255, 255, 0.95);
+            padding: 1.5rem;
+            border-radius: 1rem;
+            width: 90%;
+            max-width: 500px;
+            position: relative;
+        }
+        .dark .modal-content {
+            background: rgba(15, 23, 42, 0.9);
+        }
+        .close-btn {
+            position: absolute;
+            top: 10px;
+            right: 15px;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #374151;
+        }
+        .dark .close-btn {
+            color: #d1d5db;
+        }
+        .modal-input {
+            width: 100%;
+            padding: 0.5rem;
+            margin: 0.5rem 0;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+        }
+        .dark .modal-input {
+            border-color: #4b5563;
+            background: #1e293b;
+            color: #d1d5db;
+        }
+    </style>
+</head>
+<body>
+      <div class="sidebar" id="sidebar">
+        <div class="sidebar-header">
+            <div class="sidebar-logo">
+                <svg class="logo-glow h-10" xmlns="http://www.w3.org/2000/svg" width="200" height="60" viewBox="0 0 200 60">
+                    <g transform="translate(10 10)">
+                        <path d="M0 30 H40 V10 L20 0 L0 10 V30 Z" fill="#1e3a8a"/>
+                        <rect x="15" y="20" width="10" height="10" fill="#ffffff"/>
+                        <path d="M45 15 A15 15 0 0 1 30 30 H35" fill="none" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+                        <path d="M15 15 A15 15 0 0 0 30 0 H25" fill="none" stroke="#14b8a6" stroke-width="3" stroke-linecap="round"/>
+                    </g>
+                    <text x="60" y="40" font-family="Arial, sans-serif" font-size="24" font-weight="bold" class="sidebar-logo-text">
+                        <tspan fill="#1e3a8a">Ware</tspan>
+                        <tspan fill="#14b8a6">Sync</tspan>
+                    </text>
+                </svg>
+            </div>
+        </div>
+        <div class="sidebar-nav">
+            <a href="dashboard.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"></path>
+                </svg>
+                <span>Dashboard</span>
+            </a>
+            <a href="Item.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+                <span>Create Items</span>
+            </a>
+            <a href="viewitems.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                </svg>
+                <span>Manage Items</span>
+            </a>
+            <a href="inventory.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                </svg>
+                <span>Inventory</span>
+            </a>
+            <a href="stockout.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h1m0 0l3-3m-3 3l3 3m-3-3v-6m6 6h1a2 2 0 002-2V7a2 2 0 00-2-2h-1m0 0l-3 3m3-3l-3-3"></path>
+                </svg>
+                <span>Record Stock Out</span>
+            </a>
+            <a href="stock.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+                <span>Record Stock Adjustment</span>
+            </a>
+            <a href="supplier-management.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                </svg>
+                <span>Supplier Management</span>
+            </a>
+            <a href="location-management.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span>Location Management</span>
+            </a>
+            <a href="reporting.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17v-2a4 4 0 014-4h2m-2 6h2a4 4 0 014 4v2m-8-6a4 4 0 01-4-4V7m4 10h2m-2 0H7m10 0v-2a4 4 0 00-4-4H9m4 6v2m0 0v2a4 4 0 01-4 4H9m4-6h2"></path>
+                </svg>
+                <span>Reports</span>
+            </a>
+            <a href="usermanagement.html">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 14v6m0 0h6m-6 0H6"></path>
+                </svg>
+                <span>User Management</span>
+            </a>
+            <a href="setting.html" class="active">
+                <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path>
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                </svg>
+                <span>Settings</span>
+            </a>
+        </div>
+    </div>
+
+
+    <!-- Navbar -->
+    <div class="navbar">
+        <div class="flex items-center mr-auto">
+            <svg id="menuToggle" class="menu-icon h-6 w-6 mr-4 cursor-pointer" fill="none" stroke="currentColor" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16m-7 6h7"></path>
+            </svg>
+        </div>
+        <div class="user-profile">
+            <div class="user-avatar">JD</div>
+            <span class="text-gray-800">John Doe</span>
+            <a href="#" id="logoutBtn" class="logout-btn">Logout</a>
+            <div id="darkModeToggle" class="dark-mode-toggle" aria-label="Toggle dark mode"></div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="main-content">
+        <h1 class="text-3xl font-bold text-gray-800 dark:text-gray-700 mb-6">Dashboard</h1>
+        <!-- Status Cards -->
+        <div class="status-card">
+            <div class="total"><strong>Total Items</strong><br>1</div>
+            <div class="low-stock"><strong>Low Stock</strong><br>0</div>
+            <div class="out-of-stock"><strong>Out of Stock</strong><br>0</div>
+            <div class="transactions"><strong>Recent Transactions</strong><br>0</div>
+        </div>
+        <!-- Inventory List Card with Table -->
+        <div class="card p-6 mt-6">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200">Inventory List</h2>
+            </div>
+            <table class="inventory-table">
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th>Stock Keeping Unit</th>
+                        <th>Quantity</th>
+                        <th>Location</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="inventoryTableBody">
+                    <tr>
+                        <td>Item A</td>
+                        <td>SKU123</td>
+                        <td>25</td>
+                        <td>A1</td>
+                        <td class="in-stock">In Stock</td>
+                        <td>
+                            <button class="text-blue-500 hover:underline mr-2 view-btn">View</button>
+                            <button class="text-yellow-500 hover:underline mr-2 edit-btn">Edit</button>
+                            <button class="text-red-500 hover:underline delete-btn">Delete</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- View Modal -->
+    <div id="viewModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">×</span>
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Item Details</h2>
+            <p><strong>Item:</strong> <span id="viewItem"></span></p>
+            <p><strong>SKU:</strong> <span id="viewSKU"></span></p>
+            <p><strong>Quantity:</strong> <span id="viewQuantity"></span></p>
+            <p><strong>Location:</strong> <span id="viewLocation"></span></p>
+            <p><strong>Status:</strong> <span id="viewStatus"></span></p>
+        </div>
+    </div>
+
+    <!-- Edit Modal -->
+    <div id="editModal" class="modal">
+        <div class="modal-content">
+            <span class="close-btn">×</span>
+            <h2 class="text-xl font-semibold text-gray-800 dark:text-gray-200 mb-4">Edit Item</h2>
+            <div>
+                <label class="block text-gray-700 dark:text-gray-300">Item</label>
+                <input type="text" id="editItem" class="modal-input">
+                <label class="block text-gray-700 dark:text-gray-300">SKU</label>
+                <input type="text" id="editSKU" class="modal-input">
+                <label class="block text-gray-700 dark:text-gray-300">Quantity</label>
+                <input type="number" id="editQuantity" class="modal-input">
+                <label class="block text-gray-700 dark:text-gray-300">Location</label>
+                <input type="text" id="editLocation" class="modal-input">
+                <label class="block text-gray-700 dark:text-gray-300">Status</label>
+                <select id="editStatus" class="modal-input">
+                    <option value="In Stock">In Stock</option>
+                    <option value="Out of Stock">Out of Stock</option>
+                </select>
+                <button id="saveEditBtn" class="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600 mt-4 w-full">Save</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // DOM Elements
+        const sidebar = document.getElementById('sidebar');
+        const menuToggle = document.getElementById('menuToggle');
+        const logoutBtn = document.getElementById('logoutBtn');
+        const darkModeToggle = document.getElementById('darkModeToggle');
+        const inventoryTableBody = document.getElementById('inventoryTableBody');
+        const viewModal = document.getElementById('viewModal');
+        const editModal = document.getElementById('editModal');
+        const closeButtons = document.querySelectorAll('.close-btn');
+        const saveEditBtn = document.getElementById('saveEditBtn');
+
+        // Check if user is logged in
+        const userSession = JSON.parse(localStorage.getItem('userSession'));
+        if (!userSession) {
+            window.location.href = 'index.html';
+        }
+
+        // Dark Mode Toggle
+        darkModeToggle.addEventListener('click', () => {
+            document.body.classList.toggle('dark');
+        });
+
+        // Sidebar Toggle
+        document.addEventListener("DOMContentLoaded", () => {
+            menuToggle.addEventListener("click", () => {
+                sidebar.classList.toggle("minimized");
+                menuToggle.style.display = "inline-block";
+            });
+        });
+
+        // Logout Functionality
+        logoutBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            localStorage.removeItem('userSession');
+            window.location.href = 'index.html';
+        });
+
+        // Update Status Counts
+        function updateStatusCounts() {
+            const rows = inventoryTableBody.getElementsByTagName('tr');
+            let total = rows.length;
+            let lowStock = 0;
+            let outOfStock = 0;
+
+            for (let row of rows) {
+                const quantity = parseInt(row.cells[2].textContent);
+                const status = row.cells[4].textContent;
+                if (quantity < 10 && quantity > 0) lowStock++;
+                if (quantity === 0 || status === 'Out of Stock') outOfStock++;
+            }
+
+            const totalElement = document.querySelector('.status-card .total strong + br');
+            if (totalElement) totalElement.nextSibling.nodeValue = total;
+
+            const lowStockElement = document.querySelector('.status-card .low-stock strong + br');
+            if (lowStockElement) lowStockElement.nextSibling.nodeValue = lowStock;
+
+            const outOfStockElement = document.querySelector('.status-card .out-of-stock strong + br');
+            if (outOfStockElement) outOfStockElement.nextSibling.nodeValue = outOfStock;
+
+            const transactionsElement = document.querySelector('.status-card .transactions strong + br');
+            if (transactionsElement) transactionsElement.nextSibling.nodeValue = Math.floor(Math.random() * 100);
+        }
+
+        // Bind actions to row buttons
+        function bindRowActions(row) {
+            // View Button
+            row.querySelector('.view-btn').addEventListener('click', () => {
+                const cells = row.cells;
+                document.getElementById('viewItem').textContent = cells[0].textContent;
+                document.getElementById('viewSKU').textContent = cells[1].textContent;
+                document.getElementById('viewQuantity').textContent = cells[2].textContent;
+                document.getElementById('viewLocation').textContent = cells[3].textContent;
+                document.getElementById('viewStatus').textContent = cells[4].textContent;
+                viewModal.style.display = 'flex';
+            });
+
+            // Edit Button
+            row.querySelector('.edit-btn').addEventListener('click', () => {
+                const cells = row.cells;
+                document.getElementById('editItem').value = cells[0].textContent;
+                document.getElementById('editSKU').value = cells[1].textContent;
+                document.getElementById('editQuantity').value = cells[2].textContent;
+                document.getElementById('editLocation').value = cells[3].textContent;
+                document.getElementById('editStatus').value = cells[4].textContent;
+                editModal.style.display = 'flex';
+
+                // Save Edit
+                saveEditBtn.onclick = () => {
+                    cells[0].textContent = document.getElementById('editItem').value;
+                    cells[1].textContent = document.getElementById('editSKU').value;
+                    cells[2].textContent = document.getElementById('editQuantity').value;
+                    cells[3].textContent = document.getElementById('editLocation').value;
+                    const newStatus = document.getElementById('editStatus').value;
+                    cells[4].textContent = newStatus;
+                    cells[4].className = newStatus.toLowerCase().replace(' ', '-') || 'in-stock';
+                    editModal.style.display = 'none';
+                    updateStatusCounts();
+                };
+            });
+
+            // Delete Button
+            row.querySelector('.delete-btn').addEventListener('click', () => {
+                row.remove();
+                updateStatusCounts();
+            });
+        }
+
+        // Bind actions to initial rows
+        document.querySelectorAll('#inventoryTableBody tr').forEach(row => bindRowActions(row));
+
+        // Close Modals
+        closeButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                viewModal.style.display = 'none';
+                editModal.style.display = 'none';
+            });
+        });
+
+        // Close Modal on Outside Click
+        window.addEventListener('click', (e) => {
+            if (e.target === viewModal) viewModal.style.display = 'none';
+            if (e.target === editModal) editModal.style.display = 'none';
+        });
+
+        // Initial Status Update
+        updateStatusCounts();
+    </script>
+</body>
+</html>
